@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Xcom Proxy</title>
+    <script>
+        // Sets up a dumbed down faux skeleton of Angular module and service components and sets up variables.
+        var ipCookie,
+            crosstab,
+            ngModules = [],
+            angular = {
+                module: function () {
+                    return {
+                        factory: function (name, moduleArr) {
+                            ipCookie = moduleArr[moduleArr.length - 1]([document]);
+                        }
+                    }
+                }
+            },
+            hjAppModule = {
+                service: function (name, moduleArr) {
+                    crosstab = moduleArr[moduleArr.length - 1](ipCookie);
+                }
+            };
+    </script>
+    <script src="/xcom/js/libs/angular-cookie.min.js"></script>
+    <script src="/xcom/js/services/crosstab.js"></script>
+    <script>
+        (function(origin) {
+            // Send a notice back to script to inform we are ready to send.
+            var sendKnockknock = function () {
+                top.postMessage({
+                    eventId: 'knockknock'
+                }, origin);
+            };
+
+            // Listen to postMessage events.
+            var listen = function () {
+                if (window.addEventListener) {
+                    window.addEventListener('message', onMessage, false);
+                } else {
+                    window.attachEvent('onmessage', onMessage);
+                }
+            };
+
+            // Receive a message and send on eventId and data to crosstab.
+            var onMessage = function(event) {
+                if(event.data   && event.data.eventId) {
+                    crosstab.signal(event.data.eventId, event.data.data);
+                }
+            };
+
+            // Initiate the script.
+            var init = function () {
+                listen();
+                sendKnockknock();
+            };
+            init();
+        })(parent.location.origin);
+    </script>
+</head>
+<body>
+
+</body>
+</html>

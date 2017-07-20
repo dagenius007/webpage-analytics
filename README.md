@@ -12,7 +12,9 @@ XCOM uses cookies that are evaluated at an interval and when they are changed th
 
 The client implementation require a small proxy (proxy.html) to be loaded on the same domain as the AngularJS app. The URL of this then needs to be configured in the "host" variable inside xcom.js.
 
-The Angular service should simply be included as a service and called
+The Angular service should simply be included as a service and called from within your AngularJS app.
+
+Feel free to improve as you see fit.
 
 
 ### Who do I talk to? ###

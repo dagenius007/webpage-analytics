@@ -17,7 +17,7 @@
                     }
                 }
             },
-            hjAppModule = {
+            appModule = {
                 service: function (name, moduleArr) {
                     crosstab = moduleArr[moduleArr.length - 1](ipCookie);
                 }
@@ -56,7 +56,7 @@
                 sendKnockknock();
             };
             init();
-        })(parent.location.origin);
+        })('*');
     </script>
 </head>
 <body>

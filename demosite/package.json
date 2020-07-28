@@ -1,0 +1,12 @@
+{
+  "name": "demosite",
+  "version": "1.0.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "serve -l 3000 public/"
+  },
+  "devDependencies": {
+    "serve": "^11.3.2"
+  }
+}

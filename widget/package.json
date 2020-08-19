@@ -29,7 +29,7 @@
     },
     "restoreMocks": true,
     "moduleNameMapper": {
-      "\\.(css|less)$": "<rootDir>/__mocks__/styleMock.js",
+      "\\.(css|less|svg)$": "<rootDir>/__mocks__/styleMock.js",
       "@api$": "<rootDir>/../api/api"
     }
   },

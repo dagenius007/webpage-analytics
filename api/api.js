@@ -4,6 +4,7 @@ const EVENT_TYPES = {
   KEY_PRESS: 'event/KEY_PRESS',
   CLICK: 'event/CLICK',
   CHANGE: 'event/CHANGE',
+  VIEW: 'event/VIEW',
 };
 
 const validator = (events) => {

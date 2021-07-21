@@ -50,7 +50,7 @@ In an effort to improve the user experience for our users, we would like to impl
 - The Acceptance Criteria is the source of truth, not the design. 
 - There is a supplied design that shows the intended experience / visuals for the widget itself - the rest is up to you.
 - You can use your own boilerplate.
-- You should not use any third party library that ends up in the output bundle.
+- You should not use any third-party libraries that end up in the output bundle.
     - You're still allowed to use TypeScript as a compiler or testing libraries like Jest.
 - You can change any code, but the code review will be only done in `widget/src/` folder and on `widget/README.md` file.
 - For this boilerplate to run, you will need to run `npm install; npm start` in both `demosite/` and `widget/` and make sure that the 3000 and 3001 ports are available.

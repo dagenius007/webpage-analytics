@@ -276,7 +276,7 @@ const onClick = (event) => {
 	}
 
 	//Check if selector is active and slector text was not clicked
-	if (isSelectorActive && (target.id !== 'hotjar_selector_close' || target.id !== 'hotjar_selector_text')) {
+	if (isSelectorActive && target.id !== 'hotjar_selector_close' && target.id !== 'hotjar_selector_text') {
 		//Check if attribute already has data-funnel-id
 		if (!target.getAttribute('data-funnel-id')) {
 			//Use attribute id or generate random id

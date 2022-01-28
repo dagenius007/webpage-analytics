@@ -56,6 +56,12 @@
 	z-index: 4;
 	text-align: center;
 	margin-top: 5px;
+	display: flex;
+	justify-content: center;
+}
+
+.selector div p img {
+	margin-left: 12px;
 }
 
 .selector div::after {

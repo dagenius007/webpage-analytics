@@ -40,5 +40,5 @@ widget/
     this task to 1 and I could finish it within the speculated time.
 -   UI bug , adjusting the close widget to overlay on the widget was taking longer than expected.
 -   Adding typscript. It enables clean code. I already went a long with javascript before realizing the mistake I made.I
-    should this up first
+    should set this up first
 -   Setting up jsdoc for commenting . I used the template instead

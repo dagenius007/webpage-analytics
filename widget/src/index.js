@@ -52,12 +52,13 @@ const appendStep = (step, index) => {
 	node.innerHTML += `<div>
 							<span class=${styles.widget__index}>${index}</span>
 						</div> 
-						<div id="step-funnel">
+						<div id="step-funnel-${step.index}">
 							<span class=${styles.title_text}>${step.action} </span>
 							 <span class=${styles.subtitle_text} title='${step.value}'>${helper.truncateFullPath(step.value)} </span>
 						</div> 
 						<div>
-							<span id="step-remove">${stepRemove}</span>
+	
+							<img src=${stepRemove} id="step-remove-${step.index}" />
 						</div>`;
 
 	document.querySelector('.widget__steps').appendChild(node);
@@ -87,7 +88,7 @@ const rerenderStepCount = () => {
 
 const renderWidgetFunnel = () => {
 	return `<div class=${styles.widget__funnel} id="widget-funnel">
-				<button class=${styles.widget__close} id="close-widget">${closeIcon}</button>
+				<button class=${styles.widget__close}><img src=${closeIcon} id="close-widget"/></button>
 				<div class=${styles.widget__top} id='widget-top'>
 					<h3 class='${styles.widget__top_header}'>
 					   Build your funnel
@@ -95,7 +96,7 @@ const renderWidgetFunnel = () => {
 					</h3>
 					<p class='${
 						styles.widget__top_info
-					}'><span>${infoIcon}</span>Navigate through your site and add the steps that will make up this funnel.
+					}'><span><img src=${infoIcon} /></span>Navigate through your site and add the steps that will make up this funnel.
 					</p>
 				</div>
 				
@@ -118,14 +119,14 @@ const renderWidgetFunnel = () => {
 					<button class='${styles.widget__botton_remove}' id='reset-funnel'>Reset funnel</button>
 				</div>
 
-				<div class='${styles.widget__icon}' id='widget-icon'>${closeIcon}</div>
+				<div class='${styles.widget__icon}' id='widget-icon'> <img src=${closeIcon} id="widget-icon"/></div>
 			</div> `;
 };
 
 const renderSelector = () => {
 	return `<div class=${styles.selector} id="selector">
 				<div>
-					<p>Select an element on the page <button id='hotjar_selector_close'>${closeSelector}</button></p>
+					<p id='hotjar_selector_text'>Select an element on the page <button><img src=${closeSelector} id='hotjar_selector_close'/></button></p>
 				</div>
 			</div>`;
 };
@@ -238,35 +239,31 @@ const renderSelectAction = (options) => {
 };
 
 const onSubmit = () => {
-	console.log('Submitt.......');
 	console.log({ steps });
 	if (steps.length === 0) {
-		alert('');
+		alert('No steps added yet');
 		return;
 	}
 
 	const apiSteps = steps.map((step) => ({ type: EVENT_TYPES[step.action], payload: step.action }));
 	api.submit([...apiSteps]);
+	localStorage.setItem('hotjar_funnel', []);
+	steps = [];
+	reRenderSteps(steps);
 };
 
-const removeStep = (event) => {
-	let parentElement = event.target;
-	//get next li
-	while (parentElement.nodeName !== 'LI') {
-		parentElement = parentElement.parentNode;
-	}
-
+const removeStep = (index) => {
 	removeActiveState();
-
-	const index = parentElement.getAttribute('data-funnel-step');
-
 	steps = steps.filter((step) => {
 		if (step.index === parseInt(index)) {
 			//Remove data-funnel-id
-			const element = document.querySelector(step.value);
-			element.removeAttribute('data-funnel-id');
+			if (!step.isUrl) {
+				const element = document.querySelector(step.value);
+				element.removeAttribute('data-funnel-id');
+			}
 			return false;
 		}
+		return true;
 	});
 
 	localStorage.setItem('hotjar_funnel', JSON.stringify(steps));
@@ -277,17 +274,19 @@ const removeStep = (event) => {
 const onKeyDown = (event) => {
 	if (event.altKey && event.code === 'KeyP') {
 		const url = window.location.href;
-		// Check if Url exist =
-		// let urlExist
+		// Check if Url already exist
+		let urlExist = steps.find((step) => step.value === url);
+
+		if (urlExist) return;
 		const step = {
 			action: 'VISITED_URL',
 			value: url,
 			index: steps.length + 1,
+			isUrl: true,
 		};
 		steps.push(step);
 		localStorage.setItem('hotjar_funnel', JSON.stringify(steps));
 		reRenderSteps(steps);
-		// appendStep(step, step.index);
 		return;
 	}
 
@@ -303,10 +302,6 @@ const onClick = (event) => {
 	const widgetFunnel = document.querySelector('#widget-funnel');
 	const widgetIcon = document.querySelector('#widget-icon');
 	const selector = document.getElementById('selector');
-	const selectorClose = document.querySelector('#hotjar_selector_close');
-	const stepRemove = document.querySelectorAll('#step-remove');
-	const resetFunnel = document.querySelector('#reset-funnel');
-	const saveFunnel = document.querySelector('#save-funnel');
 
 	// Listen for hot_jar selcector close
 	if (event.altKey) {
@@ -319,7 +314,7 @@ const onClick = (event) => {
 		return;
 	}
 
-	if (isSelectorActive && target.id !== 'hotjar_selector_close') {
+	if (isSelectorActive && target.id !== 'hotjar_selector_close' && target.id !== 'hotjar_selector_text') {
 		//Check if attribute already has id
 		if (!target.getAttribute('data-funnel-id')) {
 			//Use attribute id or generate random id
@@ -330,6 +325,7 @@ const onClick = (event) => {
 				value: id,
 				index: steps.length + 1,
 				currentPage: window.location.href,
+				isUrl: false,
 			};
 			steps.push(step);
 
@@ -347,56 +343,56 @@ const onClick = (event) => {
 		createWrapper(target);
 	} else {
 		//Close widget
-		if (widgetFunnel) {
-			const widgetCloseIcon = widgetFunnel.querySelector('#close-widget');
-			widgetCloseIcon.addEventListener('click', function () {
-				widgetFunnel.style.visibility = 'hidden';
-				widgetIcon.style.visibility = 'visible';
-			});
+		if (target && target.id === 'close-widget') {
+			widgetFunnel.style.visibility = 'hidden';
+			widgetIcon.style.visibility = 'visible';
+			return;
 		}
 
 		//Clear all steps added
-		if (resetFunnel) {
-			resetFunnel.addEventListener('click', function () {
-				localStorage.removeItem('hotjar_funnel');
-				removeActiveState();
-				steps = [];
-				reRenderSteps([]);
-			});
+		if (target && target.id === 'reset-funnel') {
+			localStorage.removeItem('hotjar_funnel');
+			removeActiveState();
+			steps = [];
+			reRenderSteps([]);
+			return;
 		}
 
-		if (saveFunnel) {
-			console.log({ saveFunnel });
-			saveFunnel.addEventListener('click', function () {
-				onSubmit();
-			});
+		if (target && target.id === 'save-funnel') {
+			onSubmit();
+			return;
 		}
 
-		//Close widget
-		if (widgetIcon) {
-			widgetIcon.addEventListener('click', function () {
-				widgetFunnel.style.visibility = 'visible';
-				widgetIcon.style.visibility = 'hidden';
-			});
+		if (target && target.id === 'widget-icon') {
+			widgetFunnel.style.visibility = 'visible';
+			widgetIcon.style.visibility = 'hidden';
+			return;
 		}
 
-		//Remove selected step
-		if (stepRemove.length > 0) {
-			stepRemove.forEach((step) =>
-				step.addEventListener('click', function (event) {
-					console.log({ event });
-					removeStep(event);
-				}),
-			);
+		//Close selector
+
+		if (target && target.id === 'hotjar_selector_close') {
+			isSelectorActive = false;
+			selector.style.visibility = 'hidden';
+			widgetFunnel.style.visibility = 'visible';
+			return;
 		}
 
-		//Activate selected step
-		if (
-			event.target.getAttribute('id') === 'step-funnel' ||
-			event.target.parentNode.getAttribute('id') === 'step-funnel'
-		) {
+		// Remove selected step
+
+		if (target && target.id.includes('step-remove')) {
+			const id = target.id;
+			const dataSet = id.split('-');
+			removeStep(dataSet[dataSet.length - 1]);
+			return;
+		}
+
+		//Activate selected step on click of a paricular step
+		if (target && (target.id.includes('step-funnel') || event.target.parentNode.id.includes('step-funnel'))) {
+			//Remove active id the is already active state
+			removeActiveState();
 			let parentElement = event.target;
-			//get next li
+			//get parent li
 			while (parentElement.nodeName !== 'LI') {
 				parentElement = parentElement.parentNode;
 			}
@@ -405,15 +401,6 @@ const onClick = (event) => {
 			activeFunnel = parseInt(index);
 			const { value } = steps.find((step) => step.index === parseInt(index));
 			createWrapper(document.querySelector(value));
-		}
-
-		//Close selector
-		if (selectorClose) {
-			selectorClose.addEventListener('click', function (event) {
-				isSelectorActive = false;
-				selector.style.visibility = 'hidden';
-				widgetFunnel.style.visibility = 'visible';
-			});
 		}
 	}
 };

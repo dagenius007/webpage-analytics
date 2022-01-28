@@ -21,7 +21,7 @@ module.exports = () => ({
 			},
 			{
 				test: /\.(jpe?g|png|gif|svg|ico)$/i,
-				loader: 'raw-loader',
+				loader: 'url-loader',
 				options: {
 					// name: '[path][name].[ext]?[contenthash]',
 					// publicPath: 'images',

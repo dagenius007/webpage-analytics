@@ -1,11 +1,7 @@
 import styles from './index.css';
 import * as api from '@api';
-import infoIcon from './images/info.svg';
-import closeIcon from './images/close.svg';
-import closeSelector from './images/x.svg';
-import stepRemove from './images/stepclose.svg';
-import widget from './images/widget.svg';
 import * as helper from './helper';
+import { STEP_VIEW, WIDGET, SELECTION_ACTIONS } from './components';
 
 const EVENT_TYPES = {
 	VISITED_URL: 'event/VISITED_URL',
@@ -20,55 +16,65 @@ const data = localStorage.getItem('hotjar_funnel');
 let steps = data ? JSON.parse(data) : [];
 let activeFunnel = null;
 
+//check if selector is active
 let isSelectorActive = false;
 
-const reRenderSteps = (steps) => {
+/* 
+  Rerender steps is used to update the dom whenever a new node is added , remove or totally cleared
+  * @param  {_steps} list of steps added to the funnel
+  * @returns void
+*/
+const reRenderSteps = (_steps) => {
 	var e = document.querySelector('.widget__steps');
-	//remove all elements and add to it
+	//remove all elements
 	var child = e.lastElementChild;
 	while (child) {
 		e.removeChild(child);
 		child = e.lastElementChild;
 	}
 
-	renderSteps(steps);
+	renderSteps(_steps);
 	rerenderStepCount();
 };
 
-//On first state
-const renderSteps = (steps) => {
-	steps.forEach((step, index) => appendStep(step, index + 1));
+/* 
+	This function renders step on first load of the page
+	* @param  {_steps} list of steps added to the funnel
+  * @returns void
+*/
+const renderSteps = (_steps) => {
+	_steps.forEach((step, index) => appendStep(step, index + 1));
 };
 
+/* 
+	This append step to the list funnel steps.
+	It is called in the rerenderSteps everything a step is added or removed
+	* @param  {_step} A single step
+	* @param  {index} unique index for that step
+  * @returns void
+*/
 const appendStep = (step, index) => {
 	const node = document.createElement('li'); // Create a <li> node
 
 	node.classList.add(styles.widget__step);
 
-	console.log(index, 'append step');
-
 	node.setAttribute('data-funnel-step', step.index);
 
-	node.innerHTML += `<div>
-							<span class=${styles.widget__index}>${index}</span>
-						</div> 
-						<div id="step-funnel-${step.index}">
-							<span class=${styles.title_text}>${step.action} </span>
-							 <span class=${styles.subtitle_text} title='${step.value}'>${helper.truncateFullPath(step.value)} </span>
-						</div> 
-						<div>
-	
-							<img src=${stepRemove} id="step-remove-${step.index}" />
-						</div>`;
+	node.innerHTML += STEP_VIEW({ step, index });
 
 	document.querySelector('.widget__steps').appendChild(node);
 };
 
-// this function is get selected elements
-const repopulateElements = (steps) => {
+/* 
+	This adds unique data-funnel-id to already selected steps
+	It happens on first load if there are already steps added
+	* @param  {_steps} list of steps added to the funnel
+	 * @returns void
+*/
+const repopulateElements = (_steps) => {
 	const currentPage = window.location.href;
 
-	steps.forEach((step) => {
+	_steps.forEach((step) => {
 		if (step.action === 'visited') return;
 
 		if (currentPage === step.currentPage) {
@@ -78,66 +84,16 @@ const repopulateElements = (steps) => {
 	});
 };
 
+/* 
+	This function rerenders the steps count after a step is removed or added
+	 * @returns void
+*/
 const rerenderStepCount = () => {
 	const stepCount = document.querySelector('#widget-count');
 	const stepLastCount = document.querySelector('#widget-last-count');
 
 	stepCount.innerHTML = `<span id='widget-count'>${steps.length} STEP</span>`;
 	stepLastCount.innerHTML = `<span id='widget-last-count'>${steps.length + 1}</span>`;
-};
-
-const renderWidgetFunnel = () => {
-	return `<div class=${styles.widget__funnel} id="widget-funnel">
-				<button class=${styles.widget__close}><img src=${closeIcon} id="close-widget"/></button>
-				<div class=${styles.widget__top} id='widget-top'>
-					<h3 class='${styles.widget__top_header}'>
-					   Build your funnel
-		 				<span id='widget-count'>${steps.length} STEP</span>
-					</h3>
-					<p class='${
-						styles.widget__top_info
-					}'><span><img src=${infoIcon} /></span>Navigate through your site and add the steps that will make up this funnel.
-					</p>
-				</div>
-				
-				<ul class='widget__steps'></ul>
-				<div class='${styles.widget__bottom}'>
-					<div><span id='widget-last-count'>${steps.length + 1}</span></div>
-					<div class='${styles.widget__options}'>
-						<div>
-							<h4 class='${styles.title_text}'>User visits current page</h4>
-							<p class='${styles.subtitle_text}'>ALT + p</p>
-						</div>
-						<div>
-							<h4 class='${styles.title_text}'>User interacts with an element</h4>
-							<p class='${styles.subtitle_text}'>ALT + click</p>
-						</div>
-					</div>
-				</div>
-				<div class='${styles.widget__bottons}'>
-					<button class='${styles.widget__botton_save}' id='save-funnel'>Save funnel</button>
-					<button class='${styles.widget__botton_remove}' id='reset-funnel'>Reset funnel</button>
-				</div>
-
-				<div class='${styles.widget__icon}' id='widget-icon'> <img src=${closeIcon} id="widget-icon"/></div>
-			</div> `;
-};
-
-const renderSelector = () => {
-	return `<div class=${styles.selector} id="selector">
-				<div>
-					<p id='hotjar_selector_text'>Select an element on the page <button><img src=${closeSelector} id='hotjar_selector_close'/></button></p>
-				</div>
-			</div>`;
-};
-
-const renderWidget = (steps) => {
-	return `<div>
-				${renderSelector()}
-				<div class=${styles.container}>
-					${renderWidgetFunnel(steps)}
-				</div>
-			</div>`;
 };
 
 const onSelect = (event) => {
@@ -155,10 +111,11 @@ const onSelect = (event) => {
 	reRenderSteps(steps);
 };
 
-const getValue = () => {
-	const step = steps.find((step) => parseInt(activeFunnel) === parseInt(step.index));
-	return step?.action || '';
-};
+/* 
+	Returns deynmaice options based on the selected tag
+	* @param  {tag} html element tag
+	* @returns options: Array
+*/
 
 const renderOptionValues = (tag) => {
 	const options = {
@@ -174,6 +131,7 @@ const renderOptionValues = (tag) => {
 	}
 };
 
+// Removes active selector on any element
 const removeActiveState = () => {
 	const isActiveSelect = document.querySelector('.active-select');
 
@@ -184,6 +142,17 @@ const removeActiveState = () => {
 	}
 };
 
+export const getValue = () => {
+	const step = steps.find((_step) => parseInt(activeFunnel) === parseInt(_step.index));
+	return step?.action || '';
+};
+
+/*
+ THis function create an active wrapper on selected elemet.
+ The element will either have been added to the list of steps or already added
+ * @param  {t} event taget
+ * @returns void
+*/
 const createWrapper = (t) => {
 	//Hide widget selector
 
@@ -206,9 +175,9 @@ const createWrapper = (t) => {
 
 	const nodeName = t.nodeName.toLowerCase();
 
-	wrapper.innerHTML += `${renderSelectAction(renderOptionValues(nodeName))}`;
+	wrapper.innerHTML += SELECTION_ACTIONS({ options: renderOptionValues(nodeName), getValue });
 
-	//Hide selector
+	//Hide selector after an element has be wrraped with the active selector
 	const selector = document.getElementById('selector');
 	if (selector) selector.style.visibility = 'hidden';
 	isSelectorActive = false;
@@ -223,23 +192,9 @@ const createWrapper = (t) => {
 	}
 };
 
-const renderSelectAction = (options) => {
-	return `<select name="action" id="funnel_actions" style="
-    position: absolute;
-    right: -5px;
-    background: #FFD902;
-    color: #242424;
-    padding: 9px 8px;
-    font-size: 14px;
-    border: 1px solid #FFD902;
-	outline:none;
-">
-	${options.map((option) => `<option value="${option}" ${getValue() === option ? 'selected' : ''}>${option}</option>`)}
-  </select>`;
-};
-
+//Submit funnel
 const onSubmit = () => {
-	console.log({ steps });
+	removeActiveState();
 	if (steps.length === 0) {
 		alert('No steps added yet');
 		return;
@@ -256,7 +211,8 @@ const removeStep = (index) => {
 	removeActiveState();
 	steps = steps.filter((step) => {
 		if (step.index === parseInt(index)) {
-			//Remove data-funnel-id
+			//Remove data-funnel-id from the element
+			//if element is not a url just remove the step
 			if (!step.isUrl) {
 				const element = document.querySelector(step.value);
 				element.removeAttribute('data-funnel-id');
@@ -266,16 +222,19 @@ const removeStep = (index) => {
 		return true;
 	});
 
+	//Update the steps
 	localStorage.setItem('hotjar_funnel', JSON.stringify(steps));
 
 	reRenderSteps(steps);
 };
 
+//Handles  all onkeydown events
 const onKeyDown = (event) => {
+	// Add visits current page to steps
 	if (event.altKey && event.code === 'KeyP') {
 		const url = window.location.href;
 		// Check if Url already exist
-		let urlExist = steps.find((step) => step.value === url);
+		let urlExist = steps.find((_step) => _step.value === url);
 
 		if (urlExist) return;
 		const step = {
@@ -290,11 +249,13 @@ const onKeyDown = (event) => {
 		return;
 	}
 
+	//Escape removes active selected element if there is
 	if (event.code === 'Escape') {
 		removeActiveState();
 	}
 };
 
+//Handles  all onClick events
 const onClick = (event) => {
 	event.preventDefault();
 
@@ -303,7 +264,7 @@ const onClick = (event) => {
 	const widgetIcon = document.querySelector('#widget-icon');
 	const selector = document.getElementById('selector');
 
-	// Listen for hot_jar selcector close
+	// Open selector if ALT key is pressed down
 	if (event.altKey) {
 		selector.style.visibility = 'visible';
 		isSelectorActive = true;
@@ -314,8 +275,9 @@ const onClick = (event) => {
 		return;
 	}
 
-	if (isSelectorActive && target.id !== 'hotjar_selector_close' && target.id !== 'hotjar_selector_text') {
-		//Check if attribute already has id
+	//Check if selector is active and slector text was not clicked
+	if (isSelectorActive && (target.id !== 'hotjar_selector_close' || target.id !== 'hotjar_selector_text')) {
+		//Check if attribute already has data-funnel-id
 		if (!target.getAttribute('data-funnel-id')) {
 			//Use attribute id or generate random id
 			const id = target.id ? `#${target.id}` : helper.getFullPath(target);
@@ -358,11 +320,13 @@ const onClick = (event) => {
 			return;
 		}
 
+		//Submit steps
 		if (target && target.id === 'save-funnel') {
 			onSubmit();
 			return;
 		}
 
+		//close widget icon
 		if (target && target.id === 'widget-icon') {
 			widgetFunnel.style.visibility = 'visible';
 			widgetIcon.style.visibility = 'hidden';
@@ -370,7 +334,6 @@ const onClick = (event) => {
 		}
 
 		//Close selector
-
 		if (target && target.id === 'hotjar_selector_close') {
 			isSelectorActive = false;
 			selector.style.visibility = 'hidden';
@@ -379,7 +342,6 @@ const onClick = (event) => {
 		}
 
 		// Remove selected step
-
 		if (target && target.id.includes('step-remove')) {
 			const id = target.id;
 			const dataSet = id.split('-');
@@ -387,7 +349,7 @@ const onClick = (event) => {
 			return;
 		}
 
-		//Activate selected step on click of a paricular step
+		//Activate selected step on click of a paricular step from widget
 		if (target && (target.id.includes('step-funnel') || event.target.parentNode.id.includes('step-funnel'))) {
 			//Remove active id the is already active state
 			removeActiveState();
@@ -396,7 +358,7 @@ const onClick = (event) => {
 			while (parentElement.nodeName !== 'LI') {
 				parentElement = parentElement.parentNode;
 			}
-			console.log({ parentElement });
+
 			const index = parentElement.getAttribute('data-funnel-step');
 			activeFunnel = parseInt(index);
 			const { value } = steps.find((step) => step.index === parseInt(index));
@@ -407,7 +369,7 @@ const onClick = (event) => {
 
 (function () {
 	//Render widget layout with steps if there are steps
-	document.querySelector('body').innerHTML += `${renderWidget(steps)}`;
+	document.querySelector('body').innerHTML += `${WIDGET(steps)}`;
 	renderSteps(steps);
 
 	//Repopulate the elements pageif reloaded or routed to another page
@@ -418,33 +380,4 @@ const onClick = (event) => {
 	document.addEventListener('click', onClick);
 
 	helper.dragElement(document.querySelector('#widget-funnel'));
-
-	// let firstCall = true;
-	// document.querySelector('#save-funnel').addEventListener('click', () => {
-	// 	console.log('button was clicked');
-	// 	if (firstCall) {
-	// 		api.submit([
-	// 			{
-	// 				type: api.VISITED_URL,
-	// 				payload: 'http://www.hotjar.com',
-	// 			},
-	// 			{
-	// 				type: api.FOCUS,
-	// 				payload: 'body',
-	// 			},
-	// 			{
-	// 				type: api.CLICK,
-	// 				payload: '#save-funnel',
-	// 			},
-	// 		]);
-	// 		firstCall = false;
-	// 	} else {
-	// 		api.submit([
-	// 			{
-	// 				type: api.VISITED_URL,
-	// 				payload: 'http://www.hotjar.com/tour',
-	// 			},
-	// 		]);
-	// 	}
-	// });
 })();
